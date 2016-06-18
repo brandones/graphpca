@@ -1,88 +1,36 @@
-""" test_cumberbatch.py
-
-    Unit tests for cumberbatch
+# test_graphpca.py
+#
+""" Unit tests for graphpca
 """
 
-import cumberbatch
 import logging
 import unittest
 
-class TestCumberbatch(unittest.TestCase):
+import networkx as nx
+import numpy as np
 
-    def test_returns_strings(self):
-        self.assertIsInstance(cumberbatch.first(), str)
-        self.assertIsInstance(cumberbatch.last(), str)
-        self.assertIsInstance(cumberbatch.full(), str)
+import graphpca
 
-        self.assertIsInstance(cumberbatch.first(clean=False), str)
-        self.assertIsInstance(cumberbatch.last(clean=False), str)
-        self.assertIsInstance(cumberbatch.full(clean=False), str)
 
-    def test_full_generates_two_words_with_space(self):
-        for i in range(100):
-            self.assertRegexpMatches(cumberbatch.full(), '\a* \a*')
-            self.assertRegexpMatches(cumberbatch.full(clean=False), '\a* \a*')
+class TestGraphPCA(unittest.TestCase):
 
-    def test_no_dirty_words_if_clean(self):
-        for i in range(100):
-            self.assertNotIn(cumberbatch.first(), cumberbatch.Lists.firstnames_unclean)
-            self.assertNotIn(cumberbatch.last(), cumberbatch.Lists.lastnames_unclean)
+    def test_returns_plausible_results(self):
+        g = nx.erdos_renyi_graph(100, 0.3)
+        g_5 = graphpca.reduce_graph(g, 5)
+        self.assertEqual(len(g_5), 5)
+        self.assertEqual(len(g_5[0]), 100)
+        for i in range(5):
+            max_val = max(abs(g_5[i]))
+            self.assertGreater(max_val, 0.01)
 
-            fullname = cumberbatch.full()
-            self.assertNotIn(fullname, cumberbatch.Lists.fullnames_unclean)
-            try:
-                (full_first, full_last) = fullname.split(' ')
-                self.assertNotIn(full_first, cumberbatch.Lists.firstnames_unclean)
-                self.assertNotIn(full_last, cumberbatch.Lists.lastnames_unclean)
-            except ValueError, e:
-                raise ValueError(fullname)
-
-    def test_clean_false_produces_dirty_words(self):
-        found_first = False
-        for i in range(1000):
-            found_first = cumberbatch.first(clean=False) in cumberbatch.Lists.firstnames_unclean
-            if found_first:
-                break
-        self.assertTrue(found_first)
-
-        found_last = False
-        for i in range(1000):
-            found_last = cumberbatch.last(clean=False) in cumberbatch.Lists.lastnames_unclean
-            if found_last:
-                break
-        self.assertTrue(found_last)
-
-        found_full_dirty_part = False
-        found_full = False
-        for i in range(100000):
-            fullname = cumberbatch.full(clean=False)
-            try:
-                (full_first, full_last) = fullname.split(' ')
-                if not found_full_dirty_part:
-                    found_full_dirty_part = (full_first in cumberbatch.Lists.firstnames_unclean or
-                                             full_last in cumberbatch.Lists.lastnames_unclean)
-                if not found_full:
-                    found_full = fullname in cumberbatch.Lists.fullnames_unclean
-                if found_full_dirty_part and found_full:
-                    break
-            except ValueError, e:
-                raise ValueError(fullname)
-        self.assertTrue(found_full_dirty_part)
-        self.assertTrue(found_full)
-
-    def test_firstname_startswith_b_or_lastname_startswith_c(self):
-        for i in range(1000):
-            fullname = cumberbatch.full()
-            try:
-                (full_first, full_last) = fullname.split(' ')
-                self.assertTrue(full_first.startswith('B') or full_last.startswith('C'))
-            except ValueError, e:
-                raise ValueError(fullname)
-
-        for i in range(1000):
-            fullname = cumberbatch.full(clean=False)
-            try:
-                (full_first, full_last) = fullname.split(' ')
-                self.assertTrue(full_first.startswith('B') or full_last.startswith('C'))
-            except ValueError, e:
-                raise ValueError(fullname)
+    def test_ok_if_multiple_zero_eigens(self):
+        g = nx.erdos_renyi_graph(100, 0.3)
+        node = next(g.nodes_iter())
+        for neighbor in g.neighbors(node):
+            g.remove_edge(node, neighbor)
+        g_5 = graphpca.reduce_graph(g, 5)
+        self.assertEqual(len(g_5), 5)
+        self.assertEqual(len(g_5[0]), 100)
+        for i in range(5):
+            max_val = max(abs(g_5[i]))
+            self.assertGreater(max_val, 0.01)
