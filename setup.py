@@ -11,17 +11,17 @@ def read(*paths):
         return f.read()
 
 setup(
-  name = 'cumberbatch',
-  packages = ['cumberbatch'],
-  version = '0.5',
+  name = 'graphpca',
+  packages = ['graphpca'],
+  version = '0.2',
   license = 'Apache License 2.0',
-  description = 'Generate names similar to Benedict Cumberbatch.',
+  description = 'Produces a low-dimensional representation of the input graph',
   long_description=(read('README.rst')),
   author = 'Brandon Istenes',
   author_email = 'brandonesbox@gmail.com',
-  url = 'https://github.com/brandones/cumberbatch',
-  download_url = 'https://github.com/brandones/cumberbatch/tarball/0.5',
-  keywords = ['names', 'testing', 'fixtures', 'generation', 'generator', 'benedict', 'cumberbatch'],
+  url = 'https://github.com/brandones/graphpca',
+  download_url = 'https://github.com/brandones/graphpca/tarball/0.2',
+  keywords = ['graph', 'math', 'pca', 'data', 'reduction', 'dimension', 'compression'],
   classifiers = ['Development Status :: 4 - Beta',
                  'License :: OSI Approved :: Apache Software License']
 )
