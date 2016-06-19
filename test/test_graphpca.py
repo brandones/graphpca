@@ -3,7 +3,6 @@
 """ Unit tests for graphpca
 """
 
-import logging
 import unittest
 
 import networkx as nx
