@@ -21,7 +21,7 @@ def reduce_from_matlab(mat_path, output_dim):
     return reduce_graph(G, output_dim)
 
 
-def reduce_graph(nx_graph, output_dim):
+def reduce_graph(nx_graph, output_dim, add_supernode=False):
     """
     Run PCA on the ETCD of the input NetworkX graph
 
@@ -49,6 +49,14 @@ def reduce_graph(nx_graph, output_dim):
         The graph to be reduced
     output_dim : int
         The number of dimensions to reduce to
+    add_supernode : bool
+        If True, adds a node to the graph that is connected to every other node
+        in the graph. This reduces the nullspace of the Laplacian to 1, making
+        there many fewer eigenpairs that need to be computed. The cost is minor
+        information loss.
+
+        TODO: How do we remove the supernode at the end???
+        TODO: How do we identify anything at the end, for that matter?
 
     Returns
     -------
@@ -59,6 +67,8 @@ def reduce_graph(nx_graph, output_dim):
     assert output_dim < len(nx_graph)
     LOG.info('Calculating Laplacian L')
     L = nx.laplacian_matrix(nx_graph).astype('d')
+    if add_supernode:
+        L = add_supernode_to_laplacian(L)
     LOG.info('Calculating nullity of L as connected components of nx_graph')
     nullity = nx.number_connected_components(nx_graph)
     LOG.info('Calculating smallest eigenvalues of L & corresponding eigenvectors')
@@ -82,6 +92,12 @@ def reduce_graph(nx_graph, output_dim):
     return X
 
 
+def add_supernode_to_laplacian(L):
+    L_padded = np.ones([n+1 for n in L.shape])
+    L_padded[:-1, :-1] = L
+    return L_padded
+
+
 def retry_eigendecomp(M, output_dim, tol=0, _attempt=0, **kwargs):
     try:
         return scipy.sparse.linalg.eigs(M, output_dim, tol=tol, **kwargs)
@@ -97,11 +113,12 @@ def retry_eigendecomp(M, output_dim, tol=0, _attempt=0, **kwargs):
         return retry_eigendecomp(M, output_dim, tol=new_tol, _attempt=_attempt+1)
 
 
-def plot_2d(pca_output_2d):
+def plot_2d(pca_output_2d, colormap_name='winter'):
     import matplotlib.pyplot as plt
-    import matplotlib.cm as cm
     x = pca_output_2d[0, :]
     y = pca_output_2d[1, :]
-    colors = cm.cool(len(x))
+    colormap = plt.get_cmap(colormap_name)
+    colors = colormap(np.linspace(0, 1, (len(x))))
     plt.scatter(x, y, c=colors)
     plt.show()
+    return plt
