@@ -10,8 +10,8 @@ import scipy.linalg
 import scipy.sparse.linalg
 from scipy.sparse.linalg.eigen.arpack.arpack import ArpackNoConvergence
 
+logging.basicConfig(level=logging.WARNING)
 LOG = logging.getLogger(__name__)
-LOG.setLevel(logging.INFO)
 
 
 def reduce_from_matlab(mat_path, output_dim):
