@@ -3,7 +3,7 @@ graphpca
 
 Produces a low-dimensional representation of the input graph.
 
-Calculates the ETCD [1]_ of the graph and reduces its dimension using PCA. The
+Calculates the ECTD [1]_ of the graph and reduces its dimension using PCA. The
 result is an embedding of the graph nodes as vectors in a low-dimensional
 space.
 
