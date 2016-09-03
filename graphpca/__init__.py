@@ -14,13 +14,6 @@ logging.basicConfig(level=logging.WARNING)
 LOG = logging.getLogger(__name__)
 
 
-def reduce_from_matlab(mat_path, output_dim):
-    mat = scipy.io.loadmat(mat_path)
-    A = mat['ans'].todense()
-    G = nx.from_numpy_matrix(A)
-    return reduce_graph(G, output_dim)
-
-
 def reduce_graph(nx_graph, output_dim, add_supernode=False):
     """
     Run PCA on the ETCD of the input NetworkX graph
