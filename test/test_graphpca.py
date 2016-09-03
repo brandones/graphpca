@@ -53,6 +53,5 @@ class TestGraphPCA(unittest.TestCase):
         difference_norm = min(np.linalg.norm(np.fabs(G2) - np.fabs(G2n)),
                               np.linalg.norm(np.fabs(G2) - np.fabs(G2n[[1, 0]])))
         print difference_norm
-        self.fail()
         self.assertLess(difference_norm, 0.00001)
 

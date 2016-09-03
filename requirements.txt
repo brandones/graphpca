@@ -3,6 +3,9 @@ networkx
 numpy
 scipy
 
+# Optional dependency
+matplotlib
+
 # Development
 docutils
 

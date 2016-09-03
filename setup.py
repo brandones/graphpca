@@ -13,15 +13,20 @@ def read(*paths):
 setup(
   name = 'graphpca',
   packages = ['graphpca'],
-  version = '0.3',
+  version = '0.4',
   license = 'Apache License 2.0',
   description = 'Produces a low-dimensional representation of the input graph',
   long_description=(read('README.rst')),
   author = 'Brandon Istenes',
   author_email = 'brandonesbox@gmail.com',
+  install_requires=[
+    'networkx',
+    'numpy',
+    'scipy'
+  ],
   url = 'https://github.com/brandones/graphpca',
-  download_url = 'https://github.com/brandones/graphpca/tarball/0.3',
-  keywords = ['graph', 'math', 'pca', 'data', 'reduction', 'dimension', 'compression'],
+  download_url = 'https://github.com/brandones/graphpca/tarball/0.4',
+  keywords = ['graph', 'draw', 'pca', 'data', 'reduction', 'dimension', 'compression'],
   classifiers = ['Development Status :: 4 - Beta',
                  'License :: OSI Approved :: Apache Software License']
 )
