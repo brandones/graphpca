@@ -7,9 +7,24 @@ Calculates the ECTD [1]_ of the graph and reduces its dimension using PCA. The
 result is an embedding of the graph nodes as vectors in a low-dimensional
 space.
 
+Graph data in this repository is courtesy of the mind-blowingly cool
+`University of Florida Sparse Matrix Collection <https://www.cise.ufl.edu/research/sparse/matrices/>`_.
 
 Usage
 -----
+
+Draw a graph, including edges, from a mat file
+::
+
+    >>> import scipy.io
+    >>> import networkx as nx
+    >>> import graphpca
+    >>> mat = scipy.io.loadmat('test/bcspwr01.mat')
+    >>> A = mat['Problem'][0][0][1].todense()  # that's just how the file came
+    >>> G = nx.from_numpy_matrix(A)
+    >>> graphpca.draw_graph(G)
+
+.. image:: output/bcspwr01-drawing.png
 
 Get a 2D PCA of a high-dimensional graph and plot it.
 ::
@@ -22,18 +37,6 @@ Get a 2D PCA of a high-dimensional graph and plot it.
 
 .. image:: output/erg-1000.png
 
-Draw a graph, including edges, from a mat file
-::
-
-    >>> import scipy.io
-    >>> import networkx as nx
-    >>> import graphpca
-    >>> mat = scipy.io.loadmat('test/bcspwr01.mat')
-    >>> A = mat['Problem'][0][0][1].todense()  # that's just how it came
-    >>> G = nx.from_numpy_matrix(A)
-    >>> graphpca.draw_graph(G)
-
-.. image:: output/bcspwr01-drawing.png
 
 Contributing
 ------------
