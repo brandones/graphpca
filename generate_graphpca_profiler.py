@@ -23,23 +23,6 @@ def main():
     plt.show()
 
 
-def profile_n():
-    n_vs_t = [[], []]
-    print 'Timing graphpca(G, 5) on Erdos-Renyi Graph nx.fast_gnp_random_graph(n, p)'
-    print '\t'.join(('n', 'p', 't (ms)'))
-    n_range = [int(pow(10.0, i/2.0)) for i in range(2, 11)]
-    p_range = [0.2, 0.2] + [2 * pow(10.0, -i/2.0) for i in range(2, 9)]
-    for n, p in zip(n_range, p_range):
-        g = nx.fast_gnp_random_graph(n, p)
-        tic = timeit.default_timer()
-        graphpca.reduce_graph(g, 3)
-        toc = timeit.default_timer()
-        print '\t'.join((str(n), str(p), str((toc - tic) * 1000)))
-        n_vs_t[0].append(n)
-        n_vs_t[1].append(toc - tic)
-    return n_vs_t
-
-
 def generate_profile_file(iterations=9, d=3, steps_per_10_factor=2):
     code = ['"""THIS FILE IS GENERATED. COMPUTERS CAN WRITE CODE NOW TOO."""',
             '',
@@ -84,6 +67,23 @@ def profile_d():
         d_vs_t[0].append(d)
         d_vs_t[1].append(toc - tic)
     return d_vs_t
+
+
+def profile_n():
+    n_vs_t = [[], []]
+    print 'Timing graphpca(G, 5) on Erdos-Renyi Graph nx.fast_gnp_random_graph(n, p)'
+    print '\t'.join(('n', 'p', 't (ms)'))
+    n_range = [int(pow(10.0, i/2.0)) for i in range(2, 11)]
+    p_range = [0.2, 0.2] + [2 * pow(10.0, -i/2.0) for i in range(2, 9)]
+    for n, p in zip(n_range, p_range):
+        g = nx.fast_gnp_random_graph(n, p)
+        tic = timeit.default_timer()
+        graphpca.reduce_graph(g, 3)
+        toc = timeit.default_timer()
+        print '\t'.join((str(n), str(p), str((toc - tic) * 1000)))
+        n_vs_t[0].append(n)
+        n_vs_t[1].append(toc - tic)
+    return n_vs_t
 
 
 if __name__ == '__main__':
