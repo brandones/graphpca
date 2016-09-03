@@ -137,3 +137,23 @@ def plot_2d(pca_output_2d, colormap_name='winter'):
     plt.scatter(x, y, c=colors)
     plt.show()
     return plt
+
+
+def draw_graph(nx_graph):
+    """
+    Draws the input graph on two axes with lines between the nodes
+
+    Positions of the nodes are determined with reduce_graph, of course.
+
+    Parameters
+    ----------
+    nx_graph : :class:`nx.Graph` or :class:`nx.DiGraph`
+        The graph to be plotted
+    """
+    import matplotlib.pyplot as plt
+    reduced_2 = reduce_graph(nx_graph, 2)
+    for edge in nx_graph.edges():
+        plt.plot([reduced_2[0, edge[0]], reduced_2[0, edge[1]]],
+                 [reduced_2[1, edge[0]], reduced_2[1, edge[1]]],
+                 'b-')
+    plot_2d(reduced_2)
