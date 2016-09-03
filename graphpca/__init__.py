@@ -53,6 +53,7 @@ def reduce_graph(nx_graph, output_dim, add_supernode=False):
         The reduced data in output_dim dimensions
 
     """
+    LOG.debug('Entering reduce_graph')
     assert output_dim < len(nx_graph)
     LOG.info('Calculating Laplacian L')
     L = nx.laplacian_matrix(nx_graph).astype('d')
@@ -62,14 +63,12 @@ def reduce_graph(nx_graph, output_dim, add_supernode=False):
     LOG.info('Calculating nullity of L as connected components of nx_graph')
     nullity = nx.number_connected_components(nx_graph)
     LOG.info('Calculating smallest eigenvalues of L & corresponding eigenvectors')
-    # Use shift-invert method to calculate smallest eigenpairs.
-    # Use very small sigma since `sigma=0.0` fails with RuntimeError: Factor is exactly singular
-    (E, U) = _retry_eigendecomp(L, output_dim + nullity, sigma=0.00001, which='LM')
-    # (E, U) = _retry_eigendecomp(L, output_dim + nullity, which='SM')
+    (E, U) = _sane_eigendecomp(L, output_dim + nullity, which='SM')
+    LOG.debug('Eigenvalues: {}'.format(E))
     LOG.info('Assembling PCA result')
     # Remove the 0 eigenvalues and corresponding eigenvectors
-    # Use tolerance value from numpy.linalg.matrix_rank
-    tol = E.max() * max(L.shape) * np.finfo(float).eps
+    # Use tolerance value 10 x from numpy.linalg.matrix_rank
+    tol = E.max() * max(L.shape) * np.finfo(float).eps * 10
     LOG.debug('Using tolerance {}'.format(tol))
     zero_indexes = [i for i in range(len(E)) if abs(E[i]) < tol]
     E = np.delete(E, zero_indexes)
@@ -80,7 +79,9 @@ def reduce_graph(nx_graph, output_dim, add_supernode=False):
         U = U[:-1, :]
     # Invert eigenvalues to get largest eigenvalues of L-pseudoinverse
     Ep = 1/E
-    LOG.debug('Inverse Eigenvalues: {}'.format(Ep))
+    LOG.debug('Filtered & Inverted Eigenvalues: {}'.format(Ep))
+    # Orient Eigenvectors
+    _orient_eigenvectors(U)
     # Assemble into the right structure
     X = np.zeros((output_dim, len(nx_graph)))
     sqrtEp = np.sqrt(Ep)
@@ -95,9 +96,51 @@ def _add_supernode_to_laplacian(L):
     return L_padded
 
 
-def _retry_eigendecomp(M, output_dim, tol=0.000000001, _attempt=0, **kwargs):
+def _orient_eigenvectors(U):
+    for i in range(U.shape[1]):
+        if U[0, i] < 0.0:
+            U[:, i] = - U[:, i]
+    return U
+
+
+def _sane_eigendecomp(M, output_dim, which='SM'):
+    if M.shape[0] < 1000:
+        return _small_eigendecomp(M, output_dim, which=which)
+    else:
+        if which == 'SM':
+            # Use shift-invert method to calculate smallest eigenpairs.
+            # Use very small sigma since `sigma=0.0` fails with
+            #    RuntimeError: Factor is exactly singular
+            return _big_eigendecomp(M, output_dim, sigma=0.00001, which='LM')
+        else:
+            return _big_eigendecomp(M, output_dim, which=which)
+
+
+def _small_eigendecomp(M, output_dim, which):
+    LOG.debug('Using _small_eigendecomp')
+    if scipy.sparse.issparse(M):
+        M = M.todense()
+    E, U = scipy.linalg.eigh(M)
+    # Cut out eigenpairs
+    if which == 'SM':
+        E = E[:output_dim]
+        U = U[:, :output_dim]
+        U = _orient_eigenvectors(U)
+    elif which == 'LM':
+        E = E[E.shape[0] - output_dim:]
+        U = U[:, U.shape[1] - output_dim:]
+        U = _orient_eigenvectors(U)
+    else:
+        raise NotImplementedError('Unknown setting for `which`: {}'.format(which))
+    return E, U
+
+
+def _big_eigendecomp(M, output_dim, tol=0.000000001, _attempt=0, **kwargs):
+    LOG.debug('Using _big_eigendecomp')
     try:
-        return scipy.sparse.linalg.eigsh(M, output_dim, tol=tol, **kwargs)
+        E, U = scipy.sparse.linalg.eigsh(M, output_dim, tol=tol, **kwargs)
+        U = _orient_eigenvectors(U)
+        return E, U
     except ArpackNoConvergence, e:
         if _attempt > 2:
           LOG.error('Eigendecomp did not converge. Bailing.')
@@ -105,7 +148,7 @@ def _retry_eigendecomp(M, output_dim, tol=0.000000001, _attempt=0, **kwargs):
         LOG.info(e)
         new_tol = tol * 10
         LOG.info('Eigendecomp failed to converge, retrying with tolerance {}'.format(new_tol))
-        return _retry_eigendecomp(M, output_dim, tol=new_tol, _attempt=_attempt+1)
+        return _big_eigendecomp(M, output_dim, tol=new_tol, _attempt=_attempt+1)
 
 
 def naive_reduce_graph(nx_graph, output_dim):
@@ -132,12 +175,13 @@ def naive_reduce_graph(nx_graph, output_dim):
     :class:`numpy.ndarray`
         The reduced data in output_dim dimensions
     """
+    LOG.debug('Entering naive_reduce_graph')
     L = nx.laplacian_matrix(nx_graph).astype('f').todense()
     LOG.info('Calculating Moore-Penrose inverse of the Laplacian L')
     Li = np.linalg.pinv(L)
     LOG.info('Calculating largest eigenvalues of L-inverse & corresponding eigenvectors')
-    (E, U) = _retry_eigendecomp(Li, output_dim)
-    # Flip order of eigenpairs so largest is first
+    (E, U) = _sane_eigendecomp(Li, output_dim, which='LM')
+    # Flip so largest eigen first
     E = E[::-1]
     U = np.fliplr(U)
     LOG.debug('Eigenvalues: {}'.format(E))
@@ -161,7 +205,7 @@ def plot_2d(pca_output_2d, colormap_name='winter'):
     return plt
 
 
-def draw_graph(nx_graph):
+def draw_graph(nx_graph, naive=False):
     """
     Draws the input graph on two axes with lines between the nodes
 
@@ -173,7 +217,10 @@ def draw_graph(nx_graph):
         The graph to be plotted
     """
     import matplotlib.pyplot as plt
-    reduced_2 = reduce_graph(nx_graph, 2)
+    if naive:
+        reduced_2 = naive_reduce_graph(nx_graph, 2)
+    else:
+        reduced_2 = reduce_graph(nx_graph, 2)
     for edge in nx_graph.edges():
         plt.plot([reduced_2[0, edge[0]], reduced_2[0, edge[1]]],
                  [reduced_2[1, edge[0]], reduced_2[1, edge[1]]],
