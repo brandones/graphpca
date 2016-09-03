@@ -20,6 +20,8 @@ Get a 2D PCA of a high-dimensional graph and plot it.
     >>> g_2 = graphpca.reduce_graph(g, 2)
     >>> graphca.plot_2d(g_2)
 
+.. image:: output/erg-1000.png
+
 Draw a graph, including edges, from a mat file
 ::
 
@@ -31,7 +33,7 @@ Draw a graph, including edges, from a mat file
     >>> G = nx.from_numpy_matrix(A)
     >>> graphpca.draw_graph(G)
 
-.. image:: bcspwr01-drawing.png
+.. image:: output/bcspwr01-drawing.png
 
 Contributing
 ------------
