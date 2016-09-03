@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# profile_graphpca.py
+# generate_graphpca_profiler.py
 #
 # Copyright 2016 Socos LLC
 #
@@ -41,7 +41,7 @@ def profile_n():
 
 
 def generate_profile_file(iterations=9, d=3, steps_per_10_factor=2):
-    code = ['"""THIS FILE IS GENERATED. IT MAY BE FUCKED UP."""',
+    code = ['"""THIS FILE IS GENERATED. COMPUTERS CAN WRITE CODE NOW TOO."""',
             '',
             'import timeit',
             'import networkx as nx',
@@ -67,7 +67,7 @@ def generate_profile_file(iterations=9, d=3, steps_per_10_factor=2):
     code.append('')
     code.extend(['{}()'.format(fcn_name) for fcn_name in fcn_names])
 
-    with open('generated_profile_functions.py', 'w') as f:
+    with open('profile_graphpca.py', 'w') as f:
         f.writelines([l + '\n' for l in code])
 
 
