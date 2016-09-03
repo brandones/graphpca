@@ -62,8 +62,10 @@ def reduce_graph(nx_graph, output_dim, add_supernode=False):
     LOG.info('Calculating nullity of L as connected components of nx_graph')
     nullity = nx.number_connected_components(nx_graph)
     LOG.info('Calculating smallest eigenvalues of L & corresponding eigenvectors')
-    (E, U) = _retry_eigendecomp(L, output_dim + nullity, which='SM')
-    LOG.debug('Eigenvalues: {}'.format(E))
+    # Use shift-invert method to calculate smallest eigenpairs.
+    # Use very small sigma since `sigma=0.0` fails with RuntimeError: Factor is exactly singular
+    (E, U) = _retry_eigendecomp(L, output_dim + nullity, sigma=0.00001, which='LM')
+    # (E, U) = _retry_eigendecomp(L, output_dim + nullity, which='SM')
     LOG.info('Assembling PCA result')
     # Remove the 0 eigenvalues and corresponding eigenvectors
     # Use tolerance value from numpy.linalg.matrix_rank
@@ -78,6 +80,7 @@ def reduce_graph(nx_graph, output_dim, add_supernode=False):
         U = U[:-1, :]
     # Invert eigenvalues to get largest eigenvalues of L-pseudoinverse
     Ep = 1/E
+    LOG.debug('Inverse Eigenvalues: {}'.format(Ep))
     # Assemble into the right structure
     X = np.zeros((output_dim, len(nx_graph)))
     sqrtEp = np.sqrt(Ep)
@@ -92,20 +95,17 @@ def _add_supernode_to_laplacian(L):
     return L_padded
 
 
-def _retry_eigendecomp(M, output_dim, tol=0, _attempt=0, **kwargs):
+def _retry_eigendecomp(M, output_dim, tol=0.000000001, _attempt=0, **kwargs):
     try:
-        # TODO: Use the more accurate "sigma" method
         return scipy.sparse.linalg.eigsh(M, output_dim, tol=tol, **kwargs)
     except ArpackNoConvergence, e:
         if _attempt > 2:
           LOG.error('Eigendecomp did not converge. Bailing.')
           raise e
         LOG.info(e)
-        if tol == 0:
-            tol = 0.000000001
         new_tol = tol * 10
         LOG.info('Eigendecomp failed to converge, retrying with tolerance {}'.format(new_tol))
-        return retry_eigendecomp(M, output_dim, tol=new_tol, _attempt=_attempt+1)
+        return _retry_eigendecomp(M, output_dim, tol=new_tol, _attempt=_attempt+1)
 
 
 def naive_reduce_graph(nx_graph, output_dim):
@@ -137,6 +137,10 @@ def naive_reduce_graph(nx_graph, output_dim):
     Li = np.linalg.pinv(L)
     LOG.info('Calculating largest eigenvalues of L-inverse & corresponding eigenvectors')
     (E, U) = _retry_eigendecomp(Li, output_dim)
+    # Flip order of eigenpairs so largest is first
+    E = E[::-1]
+    U = np.fliplr(U)
+    LOG.debug('Eigenvalues: {}'.format(E))
     LOG.info('Assembling PCA result')
     # Assemble into the right structure
     X = np.zeros((output_dim, len(nx_graph)))

@@ -41,17 +41,12 @@ class TestGraphPCA(unittest.TestCase):
         # but wow they really buried the matrix in this .mat
         A = mat['Problem'][0][0][1].todense()
         G = nx.from_numpy_matrix(A)
-        G2 = graphpca.reduce_graph(G, 2)
-        G2n = graphpca.naive_reduce_graph(G, 2)
-        print G2
-        print G2n
+        G3 = graphpca.reduce_graph(G, 3)
+        G3n = graphpca.naive_reduce_graph(G, 3)
+        print G3
+        print G3n
         # Compare the fabs because eiganvalue parity is arbitrary
-        # Compare the row-swapped even though the eigenvalue order is not at
-        # all arbitrary because reduce_graph fails to accurately determine
-        # the smallest eigenvalues of L.
-        # TODO: improve eigenvalue calculation
-        difference_norm = min(np.linalg.norm(np.fabs(G2) - np.fabs(G2n)),
-                              np.linalg.norm(np.fabs(G2) - np.fabs(G2n[[1, 0]])))
+        difference_norm = np.linalg.norm(np.fabs(G3) - np.fabs(G3n))
         print difference_norm
         self.assertLess(difference_norm, 0.00001)
 
