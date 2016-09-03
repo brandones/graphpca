@@ -41,14 +41,14 @@ class TestGraphPCA(unittest.TestCase):
         G2 = graphpca.reduce_graph(G, 2)
         G2n = graphpca.naive_reduce_graph(G, 2)
         self.assertTrue(np.allclose(G2, G2n, rtol=1e-04, atol=1e-06),
-                        'Regular result:\n{}\n\nNaive result:\n{}\n'.format(G2, G2n))
+                        'Regular result:\n{}\nNaive result:\n{}\n'.format(G2, G2n))
 
     def test_similar_output_to_naive_small(self):
         G = nx.erdos_renyi_graph(10, 0.5)
         G2 = graphpca.reduce_graph(G, 2)
         G2n = graphpca.naive_reduce_graph(G, 2)
         self.assertTrue(np.allclose(G2, G2n, rtol=1e-04, atol=1e-06),
-                        'Regular result:\n{}\n\nNaive result:\n{}\n'.format(G2, G2n))
+                        'Regular result:\n{}\nNaive result:\n{}\n'.format(G2, G2n))
 
     def test_similar_output_to_naive_mat_3(self):
         mat = scipy.io.loadmat('bcspwr01.mat')
@@ -58,30 +58,52 @@ class TestGraphPCA(unittest.TestCase):
         G = nx.from_numpy_matrix(A)
         G3 = graphpca.reduce_graph(G, 3)
         G3n = graphpca.naive_reduce_graph(G, 3)
-        # Compare the fabs because eiganvalue parity is arbitrary
         self.assertTrue(np.allclose(G3, G3n, rtol=1e-04, atol=1e-06),
-                        'Regular result:\n{}\n\nNaive result:\n{}\n'.format(G3, G3n))
+                        'Regular result:\n{}\nNaive result:\n{}\n'.format(G3, G3n))
 
     def test_similar_output_to_naive_big(self):
         G = nx.erdos_renyi_graph(1001, 0.02)
         G2 = graphpca.reduce_graph(G, 2)
         G2n = graphpca.naive_reduce_graph(G, 2)
-        # Compare the fabs because eiganvalue parity is arbitrary
         self.assertTrue(np.allclose(G2, G2n, rtol=1e-03, atol=1e-05),
-                        'Regular result:\n{}\n\nNaive result:\n{}\n'.format(G2, G2n))
+                        'Regular result:\n{}\nNaive result:\n{}\n'.format(G2, G2n))
+
+    def test_add_supernode_similar_output_to_naive_small(self):
+        G = nx.erdos_renyi_graph(10, 0.5)
+        G2 = graphpca.reduce_graph(G, 2, add_supernode=True)
+        G2n = graphpca.naive_reduce_graph(G, 2)
+        self.assertTrue(np.allclose(G2, G2n, rtol=1e-02, atol=1e-06),
+                        'Regular result:\n{}\nNaive result:\n{}\n'.format(G2, G2n))
+
+    def test_add_supernode_similar_output_to_naive_mat_3(self):
+        mat = scipy.io.loadmat('bcspwr01.mat')
+        A = mat['Problem'][0][0][1].todense()
+        G = nx.from_numpy_matrix(A)
+        G3 = graphpca.reduce_graph(G, 3, add_supernode=True)
+        G3n = graphpca.naive_reduce_graph(G, 3)
+        self.assertTrue(np.allclose(G3, G3n, rtol=1e-02, atol=1e-06),
+                        'Regular result:\n{}\nNaive result:\n{}\n'.format(G3, G3n))
+
+    def test_add_supernode_similar_output_to_naive_big(self):
+        G = nx.watts_strogatz_graph(1001, 10, 0.05)
+        G2 = graphpca.reduce_graph(G, 2, add_supernode=True)
+        G2n = graphpca.naive_reduce_graph(G, 2)
+        self.assertTrue(np.allclose(G2, G2n, rtol=1e-01, atol=1e-02),
+                        'Regular result:\n{}\nNaive result:\n{}\n'.format(G2, G2n))
 
     def test_small_eigendomp_same_as_big(self):
-        g = nx.erdos_renyi_graph(10, 0.3)
+        g = nx.erdos_renyi_graph(10, 0.5)
         l = nx.laplacian_matrix(g).astype('d')
         # Test for smallest eigs
         Eb, Ub = graphpca._big_eigendecomp(l, 4, which='SM')
         Es, Us = graphpca._small_eigendecomp(l, 4, which='SM')
         self.assertTrue(np.allclose(Eb, Es), 'Big vals: {}\nSmall vals: {}\n'.format(Eb, Es))
-        self.assertTrue(np.allclose(Ub, Us, rtol=1e-03, atol=1e-05),
-                        'Big vecs:\n{}\n\nSmall vecs:\n{}\n'.format(Ub, Us))
+        self.assertTrue(np.allclose(Ub, Us, rtol=1e-04, atol=1e-06),
+                        'Big vecs:\n{}\nSmall vecs:\n{}\n'.format(Ub, Us))
         # Test for biggest eigs
         Eb, Ub = graphpca._big_eigendecomp(l, 4, which='LM')
         Es, Us = graphpca._small_eigendecomp(l, 4, which='LM')
         self.assertTrue(np.allclose(Eb, Es), 'Big vals: {}\nSmall vals: {}\n'.format(Eb, Es))
-        self.assertTrue(np.allclose(Ub, Us, rtol=1e-04, atol=1e-06),
-                        'Big vecs:\n{}\n\nSmall vecs:\n{}\n'.format(Ub, Us))
+        self.assertTrue(np.allclose(Ub, Us, rtol=1e-03, atol=1e-06),
+                        'Big vecs:\n{}\nSmall vecs:\n{}\n'.format(Ub, Us))
+

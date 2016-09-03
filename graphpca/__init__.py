@@ -66,6 +66,15 @@ def reduce_graph(nx_graph, output_dim, add_supernode=False):
     (E, U) = _sane_eigendecomp(L, output_dim + nullity, which='SM')
     LOG.debug('Eigenvalues: {}'.format(E))
     LOG.info('Assembling PCA result')
+    # If we added a supernode, now remove it
+    if add_supernode:
+        # Remove data row
+        U = U[:-1, :]
+        # Remove eigenpair with negative value, which correspond to supernode
+        neg_indexes = np.where(E < 0.0)
+        LOG.debug('Neg indexes: {}'.format(neg_indexes))
+        E = np.delete(E, neg_indexes)
+        U = np.delete(U, neg_indexes, axis=1)
     # Remove the 0 eigenvalues and corresponding eigenvectors
     # Use tolerance value 10 x from numpy.linalg.matrix_rank
     tol = E.max() * max(L.shape) * np.finfo(float).eps * 10
@@ -73,10 +82,6 @@ def reduce_graph(nx_graph, output_dim, add_supernode=False):
     zero_indexes = [i for i in range(len(E)) if abs(E[i]) < tol]
     E = np.delete(E, zero_indexes)
     U = np.delete(U, zero_indexes, axis=1)
-    # If we added a supernode, now remove it
-    if add_supernode:
-        E = E[:-1]
-        U = U[:-1, :]
     # Invert eigenvalues to get largest eigenvalues of L-pseudoinverse
     Ep = 1/E
     LOG.debug('Filtered & Inverted Eigenvalues: {}'.format(Ep))
@@ -97,9 +102,14 @@ def _add_supernode_to_laplacian(L):
 
 
 def _orient_eigenvectors(U):
+    threshold = 1e-14
     for i in range(U.shape[1]):
-        if U[0, i] < 0.0:
-            U[:, i] = - U[:, i]
+        try:
+            if next(u for u in U[:, i] if np.fabs(u) > threshold) < 0.0:
+                U[:, i] = - U[:, i]
+        except StopIteration:
+            LOG.debug('Zero eigenvector at index {}'.format(i))
+            continue
     return U
 
 
@@ -205,7 +215,7 @@ def plot_2d(pca_output_2d, colormap_name='winter'):
     return plt
 
 
-def draw_graph(nx_graph, naive=False):
+def draw_graph(nx_graph, naive=False, add_supernode=False):
     """
     Draws the input graph on two axes with lines between the nodes
 
@@ -215,12 +225,16 @@ def draw_graph(nx_graph, naive=False):
     ----------
     nx_graph : :class:`nx.Graph` or :class:`nx.DiGraph`
         The graph to be plotted
+    naive : bool
+        Whether to use the naive graph PCA algorithm
+    add_supernode : bool
+        See the add_supernode parameter of the reduce_graph function
     """
     import matplotlib.pyplot as plt
     if naive:
         reduced_2 = naive_reduce_graph(nx_graph, 2)
     else:
-        reduced_2 = reduce_graph(nx_graph, 2)
+        reduced_2 = reduce_graph(nx_graph, 2, add_supernode=add_supernode)
     for edge in nx_graph.edges():
         plt.plot([reduced_2[0, edge[0]], reduced_2[0, edge[1]]],
                  [reduced_2[1, edge[0]], reduced_2[1, edge[1]]],
