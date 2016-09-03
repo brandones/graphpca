@@ -116,8 +116,31 @@ def _retry_eigendecomp(M, output_dim, tol=0, _attempt=0, **kwargs):
 
 
 def naive_reduce_graph(nx_graph, output_dim):
-    LOG.info('Calculating Laplacian L')
+    """
+    Run PCA on the ETCD of a NetworkX graph using a slow but precise method
+
+    This is the method that calculates the actual ETCD. It calculates the
+    Moore-Penrose pseudoinverse of the Laplacian of the input graph. We return
+    the first output_dim dimensions of the ETCD, ordered by decreasing
+    eigenvalue.
+
+    This method starts to take a very, very long time as graph size reaches
+    into the thousands due to the matrix inversion.
+
+    Parameters
+    ----------
+    nx_graph : :class:`nx.Graph` or :class:`nx.DiGraph`
+        The graph to be reduced
+    output_dim : int
+        The number of dimensions to reduce to
+
+    Returns
+    -------
+    :class:`numpy.ndarray`
+        The reduced data in output_dim dimensions
+    """
     L = nx.laplacian_matrix(nx_graph).astype('f').todense()
+    LOG.info('Calculating Moore-Penrose inverse of the Laplacian L')
     Li = np.linalg.pinv(L)
     LOG.info('Calculating largest eigenvalues of L-inverse & corresponding eigenvectors')
     (E, U) = _retry_eigendecomp(Li, output_dim)
