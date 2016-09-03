@@ -54,9 +54,6 @@ def reduce_graph(nx_graph, output_dim, add_supernode=False):
         there many fewer eigenpairs that need to be computed. The cost is minor
         information loss.
 
-        TODO: How do we remove the supernode at the end???
-        TODO: How do we identify anything at the end, for that matter?
-
     Returns
     -------
     :class:`numpy.ndarray`
@@ -66,12 +63,13 @@ def reduce_graph(nx_graph, output_dim, add_supernode=False):
     assert output_dim < len(nx_graph)
     LOG.info('Calculating Laplacian L')
     L = nx.laplacian_matrix(nx_graph).astype('d')
+    LOG.debug('L.shape: {}'.format(L.shape))
     if add_supernode:
-        L = add_supernode_to_laplacian(L)
+        L = _add_supernode_to_laplacian(L)
     LOG.info('Calculating nullity of L as connected components of nx_graph')
     nullity = nx.number_connected_components(nx_graph)
     LOG.info('Calculating smallest eigenvalues of L & corresponding eigenvectors')
-    (E, U) = retry_eigendecomp(L, output_dim + nullity, which='SM')
+    (E, U) = _retry_eigendecomp(L, output_dim + nullity, which='SM')
     LOG.debug('Eigenvalues: {}'.format(E))
     LOG.info('Assembling PCA result')
     # Remove the 0 eigenvalues and corresponding eigenvectors
@@ -81,6 +79,10 @@ def reduce_graph(nx_graph, output_dim, add_supernode=False):
     zero_indexes = [i for i in range(len(E)) if abs(E[i]) < tol]
     E = np.delete(E, zero_indexes)
     U = np.delete(U, zero_indexes, axis=1)
+    # If we added a supernode, now remove it
+    if add_supernode:
+        E = E[:-1]
+        U = U[:-1, :]
     # Invert eigenvalues to get largest eigenvalues of L-pseudoinverse
     Ep = 1/E
     # Assemble into the right structure
@@ -91,13 +93,13 @@ def reduce_graph(nx_graph, output_dim, add_supernode=False):
     return X
 
 
-def add_supernode_to_laplacian(L):
+def _add_supernode_to_laplacian(L):
     L_padded = np.ones([n+1 for n in L.shape])
-    L_padded[:-1, :-1] = L
+    L_padded[:-1, :-1] = L.todense()
     return L_padded
 
 
-def retry_eigendecomp(M, output_dim, tol=0, _attempt=0, **kwargs):
+def _retry_eigendecomp(M, output_dim, tol=0, _attempt=0, **kwargs):
     try:
         # TODO: Use the more accurate "sigma" method
         return scipy.sparse.linalg.eigsh(M, output_dim, tol=tol, **kwargs)
@@ -118,7 +120,7 @@ def naive_reduce_graph(nx_graph, output_dim):
     L = nx.laplacian_matrix(nx_graph).astype('f').todense()
     Li = np.linalg.pinv(L)
     LOG.info('Calculating largest eigenvalues of L-inverse & corresponding eigenvectors')
-    (E, U) = retry_eigendecomp(Li, output_dim)
+    (E, U) = _retry_eigendecomp(Li, output_dim)
     LOG.info('Assembling PCA result')
     # Assemble into the right structure
     X = np.zeros((output_dim, len(nx_graph)))
@@ -139,7 +141,7 @@ def plot_2d(pca_output_2d, colormap_name='winter'):
     return plt
 
 
-def draw_graph(nx_graph):
+def draw_graph(nx_graph, add_supernode=False):
     """
     Draws the input graph on two axes with lines between the nodes
 
@@ -151,7 +153,7 @@ def draw_graph(nx_graph):
         The graph to be plotted
     """
     import matplotlib.pyplot as plt
-    reduced_2 = reduce_graph(nx_graph, 2)
+    reduced_2 = reduce_graph(nx_graph, 2, add_supernode=add_supernode)
     for edge in nx_graph.edges():
         plt.plot([reduced_2[0, edge[0]], reduced_2[0, edge[1]]],
                  [reduced_2[1, edge[0]], reduced_2[1, edge[1]]],
