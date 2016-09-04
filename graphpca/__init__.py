@@ -14,7 +14,36 @@ logging.basicConfig(level=logging.WARNING)
 LOG = logging.getLogger(__name__)
 
 
-def reduce_graph(nx_graph, output_dim, add_supernode=False):
+def reduce_graph(nx_graph, output_dim):
+    """
+    Run PCA on the ETCD of the input NetworkX graph
+
+    The best algorithm and parameters for doing so are selected dynamically,
+    based on the size of the graph. A graph G with number of nodes n < 50 will
+    use the naive algorithm, reduce_graph_naively, which has more stable
+    behaviour at low node counts. Above that will use reduce_graph_efficiently.
+    For such graphs the connectivity is checked, and if the graph has
+    20 or more connected components we use the add_supernode trick.
+
+    Parameters
+    ----------
+    nx_graph : :class:`nx.Graph` or :class:`nx.DiGraph`
+        The graph to be reduced
+    output_dim : int
+        The number of dimensions to reduce to
+    """
+    if len(nx_graph) < 50:
+        return reduce_graph_naively(nx_graph, output_dim)
+    else:
+        nullity = nx.number_connected_components(nx_graph)
+        if nullity < 20:
+            return reduce_graph_efficiently(nx_graph, output_dim, add_supernode=False)
+        else:
+            return reduce_graph_efficiently(nx_graph, output_dim, add_supernode=True)
+
+
+def reduce_graph_efficiently(nx_graph, output_dim, add_supernode=False,
+                             eigendecomp_strategy='smart'):
     """
     Run PCA on the ETCD of the input NetworkX graph
 
@@ -46,12 +75,20 @@ def reduce_graph(nx_graph, output_dim, add_supernode=False):
         in the graph. This reduces the nullspace of the Laplacian to 1, making
         there many fewer eigenpairs that need to be computed. The cost is minor
         information loss.
+    eigendecomp_strategy : 'exact' | 'sparse' | 'smart'
+        Chooses the eigendecomp strategy.
+        'exact' uses `numpy.linalg.eigh` on a dense matrix. Calculates all
+            eigenpairs and then strips to just the necessary ones.
+        'sparse' uses `numpy.sparse.linalg.eigsh` on a sparse matrix.
+            Calculates just the necessary eigenpairs. Is an iterative-
+            approximative algorithm, and so sometimes yields things that are
+            not amazing, especially for edge cases.
+        'smart' uses 'exact' if n < 1000, 'sparse' otherwise.
 
     Returns
     -------
     :class:`numpy.ndarray`
         The reduced data in output_dim dimensions
-
     """
     LOG.debug('Entering reduce_graph')
     assert output_dim < len(nx_graph)
@@ -63,7 +100,7 @@ def reduce_graph(nx_graph, output_dim, add_supernode=False):
     LOG.info('Calculating nullity of L as connected components of nx_graph')
     nullity = nx.number_connected_components(nx_graph)
     LOG.info('Calculating smallest eigenvalues of L & corresponding eigenvectors')
-    (E, U) = _sane_eigendecomp(L, output_dim + nullity, which='SM')
+    (E, U) = _eigendecomp(eigendecomp_strategy, L, output_dim + nullity, which='SM')
     LOG.debug('Eigenvalues: {}'.format(E))
     LOG.info('Assembling PCA result')
     # If we added a supernode, now remove it
@@ -95,6 +132,58 @@ def reduce_graph(nx_graph, output_dim, add_supernode=False):
     return X
 
 
+def reduce_graph_naively(nx_graph, output_dim, eigendecomp_strategy='exact'):
+    """
+    Run PCA on the ETCD of a NetworkX graph using a slow but precise method
+
+    This is the method that calculates the actual ETCD. It calculates the
+    Moore-Penrose pseudoinverse of the Laplacian of the input graph. We return
+    the first output_dim dimensions of the ETCD, ordered by decreasing
+    eigenvalue.
+
+    This method starts to take a very, very long time as graph size reaches
+    into the thousands due to the matrix inversion.
+
+    Parameters
+    ----------
+    nx_graph : :class:`nx.Graph` or :class:`nx.DiGraph`
+        The graph to be reduced
+    output_dim : int
+        The number of dimensions to reduce to
+    eigendecomp_strategy : 'exact' | 'sparse' | 'smart'
+        Chooses the eigendecomp strategy.
+        'exact' uses `numpy.linalg.eigh` on a dense matrix. Calculates all
+            eigenpairs and then strips to just the necessary ones.
+        'sparse' uses `numpy.sparse.linalg.eigsh` on a sparse matrix.
+            Calculates just the necessary eigenpairs. Is an iterative-
+            approximative algorithm, and so sometimes yields things that are
+            not amazing, especially for edge cases.
+        'smart' uses 'exact' if n < 1000, 'sparse' otherwise.
+
+    Returns
+    -------
+    :class:`numpy.ndarray`
+        The reduced data in output_dim dimensions
+    """
+    LOG.debug('Entering naive_reduce_graph')
+    L = nx.laplacian_matrix(nx_graph).astype('f').todense()
+    LOG.info('Calculating Moore-Penrose inverse of the Laplacian L')
+    Li = np.linalg.pinv(L)
+    LOG.info('Calculating largest eigenvalues of L-inverse & corresponding eigenvectors')
+    (E, U) = _eigendecomp(eigendecomp_strategy, Li, output_dim, which='LM')
+    # Flip so largest eigen first
+    E = E[::-1]
+    U = np.fliplr(U)
+    LOG.debug('Eigenvalues: {}'.format(E))
+    LOG.info('Assembling PCA result')
+    # Assemble into the right structure
+    X = np.zeros((output_dim, len(nx_graph)))
+    sqrtE = np.sqrt(E)
+    for i in range(output_dim):
+        X[i, :] = sqrtE[i] * U[:, i]
+    return X
+
+
 def _add_supernode_to_laplacian(L):
     L_padded = np.ones([n+1 for n in L.shape])
     L_padded[:-1, :-1] = L.todense()
@@ -113,21 +202,52 @@ def _orient_eigenvectors(U):
     return U
 
 
-def _sane_eigendecomp(M, output_dim, which='SM'):
-    if M.shape[0] < 1000:
-        return _small_eigendecomp(M, output_dim, which=which)
+def _eigendecomp(eigendecomp_strategy, M, output_dim, which, *args, **kwargs):
+    """
+    Finds the first output_dim eigenvalues and eigenvectors for the matrix M.
+
+    Parameters
+    ----------
+    eigendecomp_strategy : 'exact' | 'sparse' | 'smart'
+        Chooses the eigendecomp strategy.
+        'exact' uses `numpy.linalg.eigh` on a dense matrix. Calculates all
+            eigenpairs and then strips to just the necessary ones.
+        'sparse' uses `numpy.sparse.linalg.eigsh` on a sparse matrix.
+            Calculates just the necessary eigenpairs. Is an iterative-
+            approximative algorithm, and so sometimes yields things that are
+            not amazing, especially for edge cases.
+        'smart' uses 'exact' if n < 1000, 'sparse' otherwise.
+    M : :class:`np.ndarray` | :class:`scipy.sparse.csc.csc_matrix`
+        The matrix to be processed
+    output_dim : int
+        The number of eigenpairs to return
+    which : str
+        'SM' | 'LM' | another option offered by scipy.sparse.linalg.eigs
+        Only 'SM' and 'LM' are acceptable for 'exact' strategy.
+        'SM' returns the smallest magnitude eigenvalues and associated
+        eigenvectors. 'LM' returns the largest.
+
+    Returns
+    -------
+    E : :class:`np.ndarray`
+        The eigenvalues of the matrix M, in increasing order
+    U : :class:`np.ndarray`
+        The corresponding eigenvectors of M
+
+    """
+    if eigendecomp_strategy == 'exact':
+        return _exact_eigendecomp(M, output_dim, which)
+    elif eigendecomp_strategy == 'sparse':
+        return _sparse_eigendecomp(M, output_dim, which, *args, **kwargs)
     else:
-        if which == 'SM':
-            # Use shift-invert method to calculate smallest eigenpairs.
-            # Use very small sigma since `sigma=0.0` fails with
-            #    RuntimeError: Factor is exactly singular
-            return _big_eigendecomp(M, output_dim, sigma=0.00001, which='LM')
+        if M.shape[0] < 1000:
+            return _exact_eigendecomp(M, output_dim, which)
         else:
-            return _big_eigendecomp(M, output_dim, which=which)
+            return _sparse_eigendecomp(M, output_dim, which, *args, **kwargs)
 
 
-def _small_eigendecomp(M, output_dim, which):
-    LOG.debug('Using _small_eigendecomp')
+def _exact_eigendecomp(M, output_dim, which):
+    LOG.debug('Using _exact_eigendecomp')
     if scipy.sparse.issparse(M):
         M = M.todense()
     E, U = scipy.linalg.eigh(M)
@@ -145,10 +265,17 @@ def _small_eigendecomp(M, output_dim, which):
     return E, U
 
 
-def _big_eigendecomp(M, output_dim, tol=0.000000001, _attempt=0, **kwargs):
-    LOG.debug('Using _big_eigendecomp')
+def _sparse_eigendecomp(M, output_dim, which, tol=0.000000001, _attempt=0, **kwargs):
+    LOG.debug('Using _sparse_eigendecomp')
     try:
-        E, U = scipy.sparse.linalg.eigsh(M, output_dim, tol=tol, **kwargs)
+        if which == 'SM':
+            # Use shift-invert method to calculate smallest eigenpairs.
+            # Use very small sigma since `sigma=0.0` fails with
+            #    RuntimeError: Factor is exactly singular
+            E, U = scipy.sparse.linalg.eigsh(M, output_dim, sigma=0.00001,
+                                             which='LM', tol=tol, **kwargs)
+        else:
+            E, U = scipy.sparse.linalg.eigsh(M, output_dim, which=which, tol=tol, **kwargs)
         U = _orient_eigenvectors(U)
         return E, U
     except ArpackNoConvergence, e:
@@ -158,50 +285,7 @@ def _big_eigendecomp(M, output_dim, tol=0.000000001, _attempt=0, **kwargs):
         LOG.info(e)
         new_tol = tol * 10
         LOG.info('Eigendecomp failed to converge, retrying with tolerance {}'.format(new_tol))
-        return _big_eigendecomp(M, output_dim, tol=new_tol, _attempt=_attempt+1)
-
-
-def naive_reduce_graph(nx_graph, output_dim):
-    """
-    Run PCA on the ETCD of a NetworkX graph using a slow but precise method
-
-    This is the method that calculates the actual ETCD. It calculates the
-    Moore-Penrose pseudoinverse of the Laplacian of the input graph. We return
-    the first output_dim dimensions of the ETCD, ordered by decreasing
-    eigenvalue.
-
-    This method starts to take a very, very long time as graph size reaches
-    into the thousands due to the matrix inversion.
-
-    Parameters
-    ----------
-    nx_graph : :class:`nx.Graph` or :class:`nx.DiGraph`
-        The graph to be reduced
-    output_dim : int
-        The number of dimensions to reduce to
-
-    Returns
-    -------
-    :class:`numpy.ndarray`
-        The reduced data in output_dim dimensions
-    """
-    LOG.debug('Entering naive_reduce_graph')
-    L = nx.laplacian_matrix(nx_graph).astype('f').todense()
-    LOG.info('Calculating Moore-Penrose inverse of the Laplacian L')
-    Li = np.linalg.pinv(L)
-    LOG.info('Calculating largest eigenvalues of L-inverse & corresponding eigenvectors')
-    (E, U) = _sane_eigendecomp(Li, output_dim, which='LM')
-    # Flip so largest eigen first
-    E = E[::-1]
-    U = np.fliplr(U)
-    LOG.debug('Eigenvalues: {}'.format(E))
-    LOG.info('Assembling PCA result')
-    # Assemble into the right structure
-    X = np.zeros((output_dim, len(nx_graph)))
-    sqrtE = np.sqrt(E)
-    for i in range(output_dim):
-        X[i, :] = sqrtE[i] * U[:, i]
-    return X
+        return _sparse_eigendecomp(M, output_dim, which=which, tol=new_tol, _attempt=_attempt+1)
 
 
 def plot_2d(pca_output_2d, colormap_name='winter'):
@@ -215,7 +299,7 @@ def plot_2d(pca_output_2d, colormap_name='winter'):
     return plt
 
 
-def draw_graph(nx_graph, naive=False, add_supernode=False):
+def draw_graph(nx_graph):
     """
     Draws the input graph on two axes with lines between the nodes
 
@@ -225,16 +309,9 @@ def draw_graph(nx_graph, naive=False, add_supernode=False):
     ----------
     nx_graph : :class:`nx.Graph` or :class:`nx.DiGraph`
         The graph to be plotted
-    naive : bool
-        Whether to use the naive graph PCA algorithm
-    add_supernode : bool
-        See the add_supernode parameter of the reduce_graph function
     """
     import matplotlib.pyplot as plt
-    if naive:
-        reduced_2 = naive_reduce_graph(nx_graph, 2)
-    else:
-        reduced_2 = reduce_graph(nx_graph, 2, add_supernode=add_supernode)
+    reduced_2 = reduce_graph(nx_graph, 2)
     for edge in nx_graph.edges():
         plt.plot([reduced_2[0, edge[0]], reduced_2[0, edge[1]]],
                  [reduced_2[1, edge[0]], reduced_2[1, edge[1]]],
