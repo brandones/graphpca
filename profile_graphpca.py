@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# generate_graphpca_profiler.py
+# profile_graphpca.py
 #
 # Copyright 2016 Socos LLC
 #
@@ -15,12 +15,12 @@ import timeit
 
 
 def main():
-    # n_vs_t = profile_n()
-    # plt.plot(*n_vs_t)
-    # plt.show()
-    d_vs_t = profile_d()
-    plt.plot(*d_vs_t)
+    n_vs_t = profile_n(10)
+    plt.plot(*n_vs_t)
     plt.show()
+    # d_vs_t = profile_d()
+    # plt.plot(*d_vs_t)
+    # plt.show()
 
 
 def generate_profile_file(iterations=9, d=3, steps_per_10_factor=2):
@@ -42,15 +42,16 @@ def generate_profile_file(iterations=9, d=3, steps_per_10_factor=2):
         code.extend([
             '',
             'def {}():'.format(fcn_name),
+            '    g = nx.fast_gnp_random_graph({}, {})'.format(n, p),
             '    tic = timeit.default_timer()',
-            '    graphpca.reduce_graph(nx.fast_gnp_random_graph({}, {}), {})'.format(n, p, d),
+            '    graphpca.reduce_graph(g, {})'.format(d),
             '    toc = timeit.default_timer()',
             '    print "\t".join((str({}), str({}), str((toc - tic) * 1000)))'.format(n, p),
         ])
     code.append('')
     code.extend(['{}()'.format(fcn_name) for fcn_name in fcn_names])
 
-    with open('profile_graphpca.py', 'w') as f:
+    with open('profile_graphpca_functions.py', 'w') as f:
         f.writelines([l + '\n' for l in code])
 
 
@@ -69,12 +70,12 @@ def profile_d():
     return d_vs_t
 
 
-def profile_n():
+def profile_n(iters=9):
     n_vs_t = [[], []]
     print 'Timing graphpca(G, 5) on Erdos-Renyi Graph nx.fast_gnp_random_graph(n, p)'
     print '\t'.join(('n', 'p', 't (ms)'))
-    n_range = [int(pow(10.0, i/2.0)) for i in range(2, 11)]
-    p_range = [0.2, 0.2] + [2 * pow(10.0, -i/2.0) for i in range(2, 9)]
+    n_range = [int(pow(10.0, i/2.0)) for i in range(2, iters + 2)]
+    p_range = [0.2, 0.2] + [2 * pow(10.0, -i/2.0) for i in range(2, iters)]
     for n, p in zip(n_range, p_range):
         g = nx.fast_gnp_random_graph(n, p)
         tic = timeit.default_timer()

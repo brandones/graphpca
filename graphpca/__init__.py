@@ -93,7 +93,7 @@ def reduce_graph_efficiently(nx_graph, output_dim, add_supernode=False,
     LOG.debug('Entering reduce_graph')
     assert output_dim < len(nx_graph)
     LOG.info('Calculating Laplacian L')
-    L = nx.laplacian_matrix(nx_graph).astype('d')
+    L = nx.laplacian_matrix(nx_graph)
     LOG.debug('L.shape: {}'.format(L.shape))
     if add_supernode:
         L = _add_supernode_to_laplacian(L)
@@ -166,7 +166,7 @@ def reduce_graph_naively(nx_graph, output_dim, eigendecomp_strategy='exact'):
         The reduced data in output_dim dimensions
     """
     LOG.debug('Entering naive_reduce_graph')
-    L = nx.laplacian_matrix(nx_graph).astype('f').todense()
+    L = nx.laplacian_matrix(nx_graph).todense()
     LOG.info('Calculating Moore-Penrose inverse of the Laplacian L')
     Li = np.linalg.pinv(L)
     LOG.info('Calculating largest eigenvalues of L-inverse & corresponding eigenvectors')
@@ -268,6 +268,7 @@ def _exact_eigendecomp(M, output_dim, which):
 def _sparse_eigendecomp(M, output_dim, which, tol=0.000000001, _attempt=0, **kwargs):
     LOG.debug('Using _sparse_eigendecomp')
     try:
+        M = M.astype('d')
         if which == 'SM':
             # Use shift-invert method to calculate smallest eigenpairs.
             # Use very small sigma since `sigma=0.0` fails with
