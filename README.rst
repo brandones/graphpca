@@ -10,6 +10,8 @@ space.
 Graph data in this repository is courtesy of the mind-blowingly cool
 `University of Florida Sparse Matrix Collection <https://www.cise.ufl.edu/research/sparse/matrices/>`_.
 
+Python 3.x and 2.6+.
+
 Usage
 -----
 
@@ -41,8 +43,7 @@ Get a 2D PCA of a high-dimensional graph and plot it.
 Contributing
 ------------
 
-Feel free to fork me and create a pull request at
-https://github.com/brandones/graphpca
+Issues and Pull requests are very welcome! [On GitHub](https://github.com/brandones/graphpca).
 
 .. [1] https://www.info.ucl.ac.be/~pdupont/pdupont/pdf/ecml04.pdf
 
