@@ -279,7 +279,7 @@ def _sparse_eigendecomp(M, output_dim, which, tol=0.000000001, _attempt=0, **kwa
             E, U = scipy.sparse.linalg.eigsh(M, output_dim, which=which, tol=tol, **kwargs)
         U = _orient_eigenvectors(U)
         return E, U
-    except ArpackNoConvergence, e:
+    except ArpackNoConvergence as e:
         if _attempt > 2:
           LOG.error('Eigendecomp did not converge. Bailing.')
           raise e
