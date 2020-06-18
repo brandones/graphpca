@@ -17,6 +17,7 @@ setup(
   license = 'Apache License 2.0',
   description = 'Produces a low-dimensional representation of the input graph',
   long_description=(read('README.rst')),
+  long_description_content_type='text/x-rst',
   author = 'Brandon Istenes',
   author_email = 'brandonesbox@gmail.com',
   install_requires=[
