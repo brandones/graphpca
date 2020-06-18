@@ -13,7 +13,7 @@ def read(*paths):
 setup(
   name = 'graphpca',
   packages = ['graphpca'],
-  version = '0.5',
+  version = '0.6',
   license = 'Apache License 2.0',
   description = 'Produces a low-dimensional representation of the input graph',
   long_description=(read('README.rst')),
