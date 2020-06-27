@@ -3,6 +3,7 @@
 """ Unit tests for graphpca
 """
 
+import os
 import unittest
 
 import networkx as nx
@@ -11,6 +12,9 @@ import scipy.io
 
 import graphpca
 
+
+def get_fixture_mat(filename):
+    return scipy.io.loadmat(os.path.dirname(os.path.realpath(__file__)) + "/" + filename)
 
 class TestGraphPCA(unittest.TestCase):
 
@@ -25,8 +29,8 @@ class TestGraphPCA(unittest.TestCase):
 
     def test_ok_if_multiple_zero_eigens(self):
         g = nx.erdos_renyi_graph(100, 0.3)
-        node = next(g.nodes_iter())
-        for neighbor in g.neighbors(node):
+        node = list(g.nodes)[0]
+        for neighbor in list(g.neighbors(node)):
             g.remove_edge(node, neighbor)
         g_5 = graphpca.reduce_graph_efficiently(g, 5)
         self.assertEqual(len(g_5), 5)
@@ -51,7 +55,7 @@ class TestGraphPCA(unittest.TestCase):
                         'Regular result:\n{}\nNaive result:\n{}\n'.format(G2, G2n))
 
     def test_similar_output_to_naive_mat_3(self):
-        mat = scipy.io.loadmat('bcspwr01.mat')
+        mat = get_fixture_mat('bcspwr01.mat')
         # I love the UFSMC (https://www.cise.ufl.edu/research/sparse/matrices/)
         # but wow they really buried the matrix in this .mat
         A = mat['Problem'][0][0][1].todense()
@@ -76,7 +80,7 @@ class TestGraphPCA(unittest.TestCase):
                         'Regular result:\n{}\nNaive result:\n{}\n'.format(G2, G2n))
 
     def test_add_supernode_similar_output_to_naive_mat_3(self):
-        mat = scipy.io.loadmat('bcspwr01.mat')
+        mat = get_fixture_mat('bcspwr01.mat')
         A = mat['Problem'][0][0][1].todense()
         G = nx.from_numpy_matrix(A)
         G3 = graphpca.reduce_graph_efficiently(G, 3, add_supernode=True)
