@@ -1,4 +1,7 @@
 #!/bin/bash
 
-$(git rev-parse --show-toplevel)/format.sh
+BASE_DIR=$(git rev-parse --show-toplevel)
+
+${BASE_DIR}/format.sh
+${BASE_DIR}/test.sh
 git update-index --again
