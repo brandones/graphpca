@@ -4,4 +4,6 @@ BASE_DIR=$(git rev-parse --show-toplevel)
 
 ${BASE_DIR}/format.sh
 ${BASE_DIR}/test.sh
+${BASE_DIR}/document.sh
 git update-index --again
+git add docs
