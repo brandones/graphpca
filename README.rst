@@ -1,5 +1,5 @@
-graphpca
-===========
+GraphPCA
+========
 
 Produces a low-dimensional representation of the input graph.
 
@@ -11,6 +11,8 @@ Graph data in this repository is courtesy of the mind-blowingly cool
 `University of Florida Sparse Matrix Collection <https://www.cise.ufl.edu/research/sparse/matrices/>`_.
 
 Python 3.x and 2.6+.
+
+See the API docs: https://brandones.github.io/graphpca/
 
 Usage
 -----
