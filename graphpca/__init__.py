@@ -42,8 +42,9 @@ def reduce_graph(nx_graph, output_dim):
             return reduce_graph_efficiently(nx_graph, output_dim, add_supernode=True)
 
 
-def reduce_graph_efficiently(nx_graph, output_dim, add_supernode=False,
-                             eigendecomp_strategy='smart'):
+def reduce_graph_efficiently(
+    nx_graph, output_dim, add_supernode=False, eigendecomp_strategy="smart"
+):
     """
     Run PCA on the ETCD of the input NetworkX graph
 
@@ -90,38 +91,38 @@ def reduce_graph_efficiently(nx_graph, output_dim, add_supernode=False,
     :class:`numpy.ndarray`
         The reduced data in output_dim dimensions
     """
-    LOG.debug('Entering reduce_graph')
+    LOG.debug("Entering reduce_graph")
     assert output_dim < len(nx_graph)
-    LOG.info('Calculating Laplacian L')
+    LOG.info("Calculating Laplacian L")
     L = nx.laplacian_matrix(nx_graph)
-    LOG.debug('L.shape: {}'.format(L.shape))
+    LOG.debug("L.shape: {}".format(L.shape))
     if add_supernode:
         L = _add_supernode_to_laplacian(L)
-    LOG.info('Calculating nullity of L as connected components of nx_graph')
+    LOG.info("Calculating nullity of L as connected components of nx_graph")
     nullity = nx.number_connected_components(nx_graph)
-    LOG.info('Calculating smallest eigenvalues of L & corresponding eigenvectors')
-    (E, U) = _eigendecomp(eigendecomp_strategy, L, output_dim + nullity, which='SM')
-    LOG.debug('Eigenvalues: {}'.format(E))
-    LOG.info('Assembling PCA result')
+    LOG.info("Calculating smallest eigenvalues of L & corresponding eigenvectors")
+    (E, U) = _eigendecomp(eigendecomp_strategy, L, output_dim + nullity, which="SM")
+    LOG.debug("Eigenvalues: {}".format(E))
+    LOG.info("Assembling PCA result")
     # If we added a supernode, now remove it
     if add_supernode:
         # Remove data row
         U = U[:-1, :]
         # Remove eigenpair with negative value, which correspond to supernode
         neg_indexes = np.where(E < 0.0)
-        LOG.debug('Neg indexes: {}'.format(neg_indexes))
+        LOG.debug("Neg indexes: {}".format(neg_indexes))
         E = np.delete(E, neg_indexes)
         U = np.delete(U, neg_indexes, axis=1)
     # Remove the 0 eigenvalues and corresponding eigenvectors
     # Use tolerance value 10 x from numpy.linalg.matrix_rank
     tol = E.max() * max(L.shape) * np.finfo(float).eps * 10
-    LOG.debug('Using tolerance {}'.format(tol))
+    LOG.debug("Using tolerance {}".format(tol))
     zero_indexes = [i for i in range(len(E)) if abs(E[i]) < tol]
     E = np.delete(E, zero_indexes)
     U = np.delete(U, zero_indexes, axis=1)
     # Invert eigenvalues to get largest eigenvalues of L-pseudoinverse
-    Ep = 1/E
-    LOG.debug('Filtered & Inverted Eigenvalues: {}'.format(Ep))
+    Ep = 1 / E
+    LOG.debug("Filtered & Inverted Eigenvalues: {}".format(Ep))
     # Orient Eigenvectors
     _orient_eigenvectors(U)
     # Assemble into the right structure
@@ -132,7 +133,7 @@ def reduce_graph_efficiently(nx_graph, output_dim, add_supernode=False,
     return X
 
 
-def reduce_graph_naively(nx_graph, output_dim, eigendecomp_strategy='exact'):
+def reduce_graph_naively(nx_graph, output_dim, eigendecomp_strategy="exact"):
     """
     Run PCA on the ETCD of a NetworkX graph using a slow but precise method
 
@@ -165,17 +166,19 @@ def reduce_graph_naively(nx_graph, output_dim, eigendecomp_strategy='exact'):
     :class:`numpy.ndarray`
         The reduced data in output_dim dimensions
     """
-    LOG.debug('Entering naive_reduce_graph')
+    LOG.debug("Entering naive_reduce_graph")
     L = nx.laplacian_matrix(nx_graph).todense()
-    LOG.info('Calculating Moore-Penrose inverse of the Laplacian L')
+    LOG.info("Calculating Moore-Penrose inverse of the Laplacian L")
     Li = np.linalg.pinv(L)
-    LOG.info('Calculating largest eigenvalues of L-inverse & corresponding eigenvectors')
-    (E, U) = _eigendecomp(eigendecomp_strategy, Li, output_dim, which='LM')
+    LOG.info(
+        "Calculating largest eigenvalues of L-inverse & corresponding eigenvectors"
+    )
+    (E, U) = _eigendecomp(eigendecomp_strategy, Li, output_dim, which="LM")
     # Flip so largest eigen first
     E = E[::-1]
     U = np.fliplr(U)
-    LOG.debug('Eigenvalues: {}'.format(E))
-    LOG.info('Assembling PCA result')
+    LOG.debug("Eigenvalues: {}".format(E))
+    LOG.info("Assembling PCA result")
     # Assemble into the right structure
     X = np.zeros((output_dim, len(nx_graph)))
     sqrtE = np.sqrt(E)
@@ -185,7 +188,7 @@ def reduce_graph_naively(nx_graph, output_dim, eigendecomp_strategy='exact'):
 
 
 def _add_supernode_to_laplacian(L):
-    L_padded = np.ones([n+1 for n in L.shape])
+    L_padded = np.ones([n + 1 for n in L.shape])
     L_padded[:-1, :-1] = L.todense()
     return L_padded
 
@@ -195,9 +198,9 @@ def _orient_eigenvectors(U):
     for i in range(U.shape[1]):
         try:
             if next(u for u in U[:, i] if np.fabs(u) > threshold) < 0.0:
-                U[:, i] = - U[:, i]
+                U[:, i] = -U[:, i]
         except StopIteration:
-            LOG.debug('Zero eigenvector at index {}'.format(i))
+            LOG.debug("Zero eigenvector at index {}".format(i))
             continue
     return U
 
@@ -235,9 +238,9 @@ def _eigendecomp(eigendecomp_strategy, M, output_dim, which, *args, **kwargs):
         The corresponding eigenvectors of M
 
     """
-    if eigendecomp_strategy == 'exact':
+    if eigendecomp_strategy == "exact":
         return _exact_eigendecomp(M, output_dim, which)
-    elif eigendecomp_strategy == 'sparse':
+    elif eigendecomp_strategy == "sparse":
         return _sparse_eigendecomp(M, output_dim, which, *args, **kwargs)
     else:
         if M.shape[0] < 1000:
@@ -247,50 +250,58 @@ def _eigendecomp(eigendecomp_strategy, M, output_dim, which, *args, **kwargs):
 
 
 def _exact_eigendecomp(M, output_dim, which):
-    LOG.debug('Using _exact_eigendecomp')
+    LOG.debug("Using _exact_eigendecomp")
     if scipy.sparse.issparse(M):
         M = M.todense()
     E, U = scipy.linalg.eigh(M)
     # Cut out eigenpairs
-    if which == 'SM':
+    if which == "SM":
         E = E[:output_dim]
         U = U[:, :output_dim]
         U = _orient_eigenvectors(U)
-    elif which == 'LM':
-        E = E[E.shape[0] - output_dim:]
-        U = U[:, U.shape[1] - output_dim:]
+    elif which == "LM":
+        E = E[E.shape[0] - output_dim :]
+        U = U[:, U.shape[1] - output_dim :]
         U = _orient_eigenvectors(U)
     else:
-        raise NotImplementedError('Unknown setting for `which`: {}'.format(which))
+        raise NotImplementedError("Unknown setting for `which`: {}".format(which))
     return E, U
 
 
 def _sparse_eigendecomp(M, output_dim, which, tol=0.000000001, _attempt=0, **kwargs):
-    LOG.debug('Using _sparse_eigendecomp')
+    LOG.debug("Using _sparse_eigendecomp")
     try:
-        M = M.astype('d')
-        if which == 'SM':
+        M = M.astype("d")
+        if which == "SM":
             # Use shift-invert method to calculate smallest eigenpairs.
             # Use very small sigma since `sigma=0.0` fails with
             #    RuntimeError: Factor is exactly singular
-            E, U = scipy.sparse.linalg.eigsh(M, output_dim, sigma=0.00001,
-                                             which='LM', tol=tol, **kwargs)
+            E, U = scipy.sparse.linalg.eigsh(
+                M, output_dim, sigma=0.00001, which="LM", tol=tol, **kwargs
+            )
         else:
-            E, U = scipy.sparse.linalg.eigsh(M, output_dim, which=which, tol=tol, **kwargs)
+            E, U = scipy.sparse.linalg.eigsh(
+                M, output_dim, which=which, tol=tol, **kwargs
+            )
         U = _orient_eigenvectors(U)
         return E, U
     except ArpackNoConvergence as e:
         if _attempt > 2:
-          LOG.error('Eigendecomp did not converge. Bailing.')
-          raise e
+            LOG.error("Eigendecomp did not converge. Bailing.")
+            raise e
         LOG.info(e)
         new_tol = tol * 10
-        LOG.info('Eigendecomp failed to converge, retrying with tolerance {}'.format(new_tol))
-        return _sparse_eigendecomp(M, output_dim, which=which, tol=new_tol, _attempt=_attempt+1)
+        LOG.info(
+            "Eigendecomp failed to converge, retrying with tolerance {}".format(new_tol)
+        )
+        return _sparse_eigendecomp(
+            M, output_dim, which=which, tol=new_tol, _attempt=_attempt + 1
+        )
 
 
-def plot_2d(pca_output_2d, colormap_name='winter'):
+def plot_2d(pca_output_2d, colormap_name="winter"):
     import matplotlib.pyplot as plt
+
     x = pca_output_2d[0, :]
     y = pca_output_2d[1, :]
     colormap = plt.get_cmap(colormap_name)
@@ -312,9 +323,12 @@ def draw_graph(nx_graph):
         The graph to be plotted
     """
     import matplotlib.pyplot as plt
+
     reduced_2 = reduce_graph(nx_graph, 2)
     for edge in nx_graph.edges():
-        plt.plot([reduced_2[0, edge[0]], reduced_2[0, edge[1]]],
-                 [reduced_2[1, edge[0]], reduced_2[1, edge[1]]],
-                 'b-')
+        plt.plot(
+            [reduced_2[0, edge[0]], reduced_2[0, edge[1]]],
+            [reduced_2[1, edge[0]], reduced_2[1, edge[1]]],
+            "b-",
+        )
     plot_2d(reduced_2)

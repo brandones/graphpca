@@ -1,0 +1,4 @@
+#!/bin/bash
+
+$(git rev-parse --show-toplevel)/format.sh
+git update-index --again
