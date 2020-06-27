@@ -121,7 +121,6 @@ pip-selfcheck.json
 profile_graphpca_functions.py
 README.html
 .DS_Store
-docs/output/
-docs/build/doctrees/
-!docs/build/html/
-!docs/build/html/*
+docs_src/output/
+docs/build/
+docs_src/build
