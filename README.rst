@@ -25,7 +25,7 @@ Draw a graph, including edges, from a mat file
     >>> import graphpca
     >>> mat = scipy.io.loadmat('test/bcspwr01.mat')
     >>> A = mat['Problem'][0][0][1].todense()  # that's just how the file came
-    >>> G = nx.from_numpy_matrix(A)
+    >>> G = nx.from_numpy_array(A)
     >>> graphpca.draw_graph(G)
 
 .. image:: output/bcspwr01-drawing.png
