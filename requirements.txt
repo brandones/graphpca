@@ -1,5 +1,5 @@
 # Dependencies
-networkx == 2.*
+networkx == 3.*
 numpy == 1.*
 scipy == 1.*
 

@@ -8,7 +8,7 @@ import numpy as np
 import scipy.io
 import scipy.linalg
 import scipy.sparse.linalg
-from scipy.sparse.linalg.eigen.arpack.arpack import ArpackNoConvergence
+from scipy.sparse.linalg import ArpackNoConvergence
 
 logging.basicConfig(level=logging.WARNING)
 LOG = logging.getLogger(__name__)

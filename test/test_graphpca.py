@@ -65,7 +65,7 @@ class TestGraphPCA(unittest.TestCase):
         # I love the UFSMC (https://www.cise.ufl.edu/research/sparse/matrices/)
         # but wow they really buried the matrix in this .mat
         A = mat["Problem"][0][0][1].todense()
-        G = nx.from_numpy_matrix(A)
+        G = nx.from_numpy_array(A)
         G3 = graphpca.reduce_graph_efficiently(G, 3)
         G3n = graphpca.reduce_graph_naively(G, 3)
         self.assertTrue(
@@ -94,7 +94,7 @@ class TestGraphPCA(unittest.TestCase):
     def test_add_supernode_similar_output_to_naive_mat_3(self):
         mat = get_fixture_mat("bcspwr01.mat")
         A = mat["Problem"][0][0][1].todense()
-        G = nx.from_numpy_matrix(A)
+        G = nx.from_numpy_array(A)
         G3 = graphpca.reduce_graph_efficiently(G, 3, add_supernode=True)
         G3n = graphpca.reduce_graph_naively(G, 3)
         self.assertTrue(

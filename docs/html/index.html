@@ -1,26 +1,25 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en" data-content_root="./">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
     <title>API &#8212; GraphPCA  documentation</title>
-    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-    <script src="_static/jquery.js"></script>
-    <script src="_static/underscore.js"></script>
-    <script src="_static/doctools.js"></script>
-    <script src="_static/language_data.js"></script>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d1102ebc" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=12dfc556" />
+    <script src="_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="_static/doctools.js?v=9a2dae69"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="API" href="api.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
   
+
   
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+  
 
   </head><body>
   
@@ -32,23 +31,23 @@
 
           <div class="body" role="main">
             
-  <div class="section" id="module-graphpca">
-<span id="api"></span><h1>API<a class="headerlink" href="#module-graphpca" title="Permalink to this headline">¶</a></h1>
+  <section id="module-graphpca">
+<span id="api"></span><h1>API<a class="headerlink" href="#module-graphpca" title="Link to this heading">¶</a></h1>
 <dl class="py function">
-<dt id="graphpca.draw_graph">
-<code class="sig-prename descclassname">graphpca.</code><code class="sig-name descname">draw_graph</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">nx_graph</span></em><span class="sig-paren">)</span><a class="headerlink" href="#graphpca.draw_graph" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="graphpca.draw_graph">
+<span class="sig-prename descclassname"><span class="pre">graphpca.</span></span><span class="sig-name descname"><span class="pre">draw_graph</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nx_graph</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#graphpca.draw_graph" title="Link to this definition">¶</a></dt>
 <dd><p>Draws the input graph on two axes with lines between the nodes</p>
 <p>Positions of the nodes are determined with reduce_graph, of course.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>nx_graph</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">nx.Graph</span></code> or <code class="xref py py-class docutils literal notranslate"><span class="pre">nx.DiGraph</span></code>) – The graph to be plotted</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py function">
-<dt id="graphpca.reduce_graph">
-<code class="sig-prename descclassname">graphpca.</code><code class="sig-name descname">reduce_graph</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">nx_graph</span></em>, <em class="sig-param"><span class="n">output_dim</span></em><span class="sig-paren">)</span><a class="headerlink" href="#graphpca.reduce_graph" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="graphpca.reduce_graph">
+<span class="sig-prename descclassname"><span class="pre">graphpca.</span></span><span class="sig-name descname"><span class="pre">reduce_graph</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nx_graph</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dim</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#graphpca.reduce_graph" title="Link to this definition">¶</a></dt>
 <dd><p>Run PCA on the ETCD of the input NetworkX graph</p>
 <p>The best algorithm and parameters for doing so are selected dynamically,
 based on the size of the graph. A graph G with number of nodes n &lt; 50 will
@@ -57,7 +56,7 @@ behaviour at low node counts. Above that will use reduce_graph_efficiently.
 For such graphs the connectivity is checked, and if the graph has
 20 or more connected components we use the add_supernode trick.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>nx_graph</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">nx.Graph</span></code> or <code class="xref py py-class docutils literal notranslate"><span class="pre">nx.DiGraph</span></code>) – The graph to be reduced</p></li>
 <li><p><strong>output_dim</strong> (<em>int</em>) – The number of dimensions to reduce to</p></li>
@@ -67,8 +66,8 @@ For such graphs the connectivity is checked, and if the graph has
 </dd></dl>
 
 <dl class="py function">
-<dt id="graphpca.reduce_graph_efficiently">
-<code class="sig-prename descclassname">graphpca.</code><code class="sig-name descname">reduce_graph_efficiently</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">nx_graph</span></em>, <em class="sig-param"><span class="n">output_dim</span></em>, <em class="sig-param"><span class="n">add_supernode</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">eigendecomp_strategy</span><span class="o">=</span><span class="default_value">'smart'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#graphpca.reduce_graph_efficiently" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="graphpca.reduce_graph_efficiently">
+<span class="sig-prename descclassname"><span class="pre">graphpca.</span></span><span class="sig-name descname"><span class="pre">reduce_graph_efficiently</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nx_graph</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">add_supernode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eigendecomp_strategy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'smart'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#graphpca.reduce_graph_efficiently" title="Link to this definition">¶</a></dt>
 <dd><p>Run PCA on the ETCD of the input NetworkX graph</p>
 <p>We skip calculating the actual ETCD for efficiency. The ETCD is given by
 the Moore-Penrose pseudoinverse of the Laplacian of the input graph. The
@@ -87,7 +86,7 @@ to calculate the smallest <code class="docutils literal notranslate"><span class
 the nullity using the convenient fact that the nullity of L is equal
 to the number of connected components in G.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>nx_graph</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">nx.Graph</span></code> or <code class="xref py py-class docutils literal notranslate"><span class="pre">nx.DiGraph</span></code>) – The graph to be reduced</p></li>
 <li><p><strong>output_dim</strong> (<em>int</em>) – The number of dimensions to reduce to</p></li>
@@ -95,7 +94,7 @@ to the number of connected components in G.</p>
 in the graph. This reduces the nullspace of the Laplacian to 1, making
 there many fewer eigenpairs that need to be computed. The cost is minor
 information loss.</p></li>
-<li><p><strong>eigendecomp_strategy</strong> (<em>'exact' | 'sparse' | 'smart'</em>) – <p>Chooses the eigendecomp strategy.
+<li><p><strong>eigendecomp_strategy</strong> (<em>'exact'</em><em> | </em><em>'sparse'</em><em> | </em><em>'smart'</em>) – <p>Chooses the eigendecomp strategy.
 ‘exact’ uses <cite>numpy.linalg.eigh</cite> on a dense matrix. Calculates all</p>
 <blockquote>
 <div><p>eigenpairs and then strips to just the necessary ones.</p>
@@ -110,18 +109,18 @@ not amazing, especially for edge cases.</p>
 </p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>The reduced data in output_dim dimensions</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py function">
-<dt id="graphpca.reduce_graph_naively">
-<code class="sig-prename descclassname">graphpca.</code><code class="sig-name descname">reduce_graph_naively</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">nx_graph</span></em>, <em class="sig-param"><span class="n">output_dim</span></em>, <em class="sig-param"><span class="n">eigendecomp_strategy</span><span class="o">=</span><span class="default_value">'exact'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#graphpca.reduce_graph_naively" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="graphpca.reduce_graph_naively">
+<span class="sig-prename descclassname"><span class="pre">graphpca.</span></span><span class="sig-name descname"><span class="pre">reduce_graph_naively</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nx_graph</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eigendecomp_strategy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'exact'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#graphpca.reduce_graph_naively" title="Link to this definition">¶</a></dt>
 <dd><p>Run PCA on the ETCD of a NetworkX graph using a slow but precise method</p>
 <p>This is the method that calculates the actual ETCD. It calculates the
 Moore-Penrose pseudoinverse of the Laplacian of the input graph. We return
@@ -130,11 +129,11 @@ eigenvalue.</p>
 <p>This method starts to take a very, very long time as graph size reaches
 into the thousands due to the matrix inversion.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>nx_graph</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">nx.Graph</span></code> or <code class="xref py py-class docutils literal notranslate"><span class="pre">nx.DiGraph</span></code>) – The graph to be reduced</p></li>
 <li><p><strong>output_dim</strong> (<em>int</em>) – The number of dimensions to reduce to</p></li>
-<li><p><strong>eigendecomp_strategy</strong> (<em>'exact' | 'sparse' | 'smart'</em>) – <p>Chooses the eigendecomp strategy.
+<li><p><strong>eigendecomp_strategy</strong> (<em>'exact'</em><em> | </em><em>'sparse'</em><em> | </em><em>'smart'</em>) – <p>Chooses the eigendecomp strategy.
 ‘exact’ uses <cite>numpy.linalg.eigh</cite> on a dense matrix. Calculates all</p>
 <blockquote>
 <div><p>eigenpairs and then strips to just the necessary ones.</p>
@@ -149,10 +148,10 @@ not amazing, especially for edge cases.</p>
 </p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>The reduced data in output_dim dimensions</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></p>
 </dd>
 </dl>
@@ -164,7 +163,7 @@ not amazing, especially for edge cases.</p>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/brandones/graphpca">GitHub</a></li>
 </ul>
 </div>
-</div>
+</section>
 
 
           </div>
@@ -196,16 +195,16 @@ not amazing, especially for edge cases.</p>
   </ul></li>
 </ul>
 </div>
-<div id="searchbox" style="display: none" role="search">
+<search id="searchbox" style="display: none" role="search">
   <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
     </form>
     </div>
-</div>
-<script>$('#searchbox').show(0);</script>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
 
 
 
@@ -219,11 +218,11 @@ not amazing, especially for edge cases.</p>
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2020, Brandon Istenes.
+      &#169;2020, Brandon Istenes.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.1.1</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.3.7</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
       
       |
       <a href="_sources/index.rst.txt"
