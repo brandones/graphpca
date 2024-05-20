@@ -7,7 +7,7 @@ Calculates the ECTD [1]_ of the graph and reduces its dimension using PCA. The
 result is an embedding of the graph nodes as vectors in a low-dimensional
 space.
 
-Graph data in this repository is courtesy of the mind-blowingly cool
+Graph data in this repository is courtesy of
 `University of Florida Sparse Matrix Collection <https://www.cise.ufl.edu/research/sparse/matrices/>`_.
 
 Python 3.x and 2.6+.
