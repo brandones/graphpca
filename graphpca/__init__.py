@@ -9,12 +9,13 @@ import scipy.io
 import scipy.linalg
 import scipy.sparse.linalg
 from scipy.sparse.linalg import ArpackNoConvergence
+from typing import Literal
 
 logging.basicConfig(level=logging.WARNING)
 LOG = logging.getLogger(__name__)
 
 
-def reduce_graph(nx_graph, output_dim):
+def reduce_graph(nx_graph: nx.Graph | nx.DiGraph, output_dim: int) -> np.ndarray:
     """
     Run PCA on the ETCD of the input NetworkX graph
 
@@ -43,8 +44,11 @@ def reduce_graph(nx_graph, output_dim):
 
 
 def reduce_graph_efficiently(
-    nx_graph, output_dim, add_supernode=False, eigendecomp_strategy="smart"
-):
+    nx_graph: nx.Graph | nx.DiGraph,
+    output_dim: int,
+    add_supernode: bool = False,
+    eigendecomp_strategy: Literal["smart", "sparse", "exact"] = "smart",
+) -> np.ndarray:
     """
     Run PCA on the ETCD of the input NetworkX graph
 
@@ -133,7 +137,11 @@ def reduce_graph_efficiently(
     return X
 
 
-def reduce_graph_naively(nx_graph, output_dim, eigendecomp_strategy="exact"):
+def reduce_graph_naively(
+    nx_graph: nx.Graph | nx.DiGraph,
+    output_dim: int,
+    eigendecomp_strategy: Literal["exact", "sparse", "smart"] = "exact",
+) -> np.ndarray:
     """
     Run PCA on the ETCD of a NetworkX graph using a slow but precise method
 
@@ -299,7 +307,7 @@ def _sparse_eigendecomp(M, output_dim, which, tol=0.000000001, _attempt=0, **kwa
         )
 
 
-def plot_2d(pca_output_2d, colormap_name="winter"):
+def plot_2d(pca_output_2d: np.ndarray, colormap_name="winter"):
     import matplotlib.pyplot as plt
 
     x = pca_output_2d[0, :]
@@ -311,11 +319,11 @@ def plot_2d(pca_output_2d, colormap_name="winter"):
     return plt
 
 
-def draw_graph(nx_graph):
+def draw_graph(nx_graph: nx.Graph | nx.DiGraph):
     """
     Draws the input graph on two axes with lines between the nodes
 
-    Positions of the nodes are determined with reduce_graph, of course.
+    Positions of the nodes are determined with reduce_graph.
 
     Parameters
     ----------
